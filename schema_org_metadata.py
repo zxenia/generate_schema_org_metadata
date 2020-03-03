@@ -87,7 +87,7 @@ def generate_schema_org_metadata(json_obj):
                     name += creator["lastName"]
                 if "email" in creator:
                     person["email"] = creator["email"]
-                if "fullname" in creator:
+                if "fullName" in creator:
                     person["name"] = creator["fullName"]
                 # schema requires 'name' or 'url' to be present for Person
                 # dats doesn't have required fields for Person
