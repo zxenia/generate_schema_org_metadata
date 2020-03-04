@@ -32,19 +32,20 @@ def main(argv):
         json.dump(schema_org_metadata, output_file, indent=4)
 
 
-#"required" : [ "title", "types", "creators", "licenses", "description", "keywords", "version" ]
-# do we only provide google jsonld for the main dataset? not hasPart datasets?
 def generate_schema_org_metadata(json_obj):
     """
-    The funciton to convert valid DATS json to schema.org jsol-ld
+    The funciton to convert valid DATS json to schema.org json-ld.
+    DATS required fields: [ "title", "types", "creators", "licenses", "description", "keywords", "version" ]
+
     :param json_obj: valid DATS json
     :return: jsol-ld snippet that should be embedded in html page for each individual dataset
-    Test the final snipper here https://search.google.com/test/rich-results
-    Example where it should go in the html:
+    Test the final snippet here https://search.google.com/test/rich-results
+
+    Example where json-ld should go in the html:
 
      <body><html>
       <head>
-        <title>NCDC Storm Events Database</title>
+        <title>Database title</title>
         <script type="application/ld+json">
             HERE
         </script>
@@ -58,11 +59,20 @@ def generate_schema_org_metadata(json_obj):
     schema_jsonld["@context"] = "https://schema.org/"
     schema_jsonld["@type"] = "Dataset"
     try:
+        # required fields
         schema_jsonld["name"] = json_obj["title"]
         schema_jsonld["description"] = json_obj["description"]
+        schema_jsonld["version"] = json_obj["version"]
         licenses = []
         for license in json_obj["licenses"]:
-            licenses.append(license["name"])
+            # license can be of type URL or CreativeWork
+            if license["name"].startswith("http"):
+                licenses.append(license["name"])
+            else:
+                license_creative_work = {}
+                license_creative_work["@type"] = "CreativeWork"
+                license_creative_work["name"] = license["name"]
+                licenses.append(license_creative_work)
         schema_jsonld["license"] = licenses
         keywords = []
         for keyword in json_obj["keywords"]:
@@ -78,21 +88,32 @@ def generate_schema_org_metadata(json_obj):
             else:
                 person = {}
                 person["@type"] = "Person"
-                name = ''
+                # all fields below are not required so we have to check if they are present
                 if "firstName" in creator:
                     person["givenName"] = creator["firstName"]
-                    name += creator["firstName"]
                 if "lastName" in creator:
                     person["familyName"] = creator["lastName"]
-                    name += creator["lastName"]
                 if "email" in creator:
                     person["email"] = creator["email"]
+                # schema.org requires 'name' or 'url' to be present for Person
+                # dats doesn't have required fields for Person,
+                # therefore in case when no 'fullName' provided or one of 'firstName' or 'lastName' is not provided
+                # we set a placeholder for 'name'
                 if "fullName" in creator:
                     person["name"] = creator["fullName"]
-                # schema requires 'name' or 'url' to be present for Person
-                # dats doesn't have required fields for Person
+                elif all (k in creator for k in ("firstName", "lastName")):
+                    person["name"] = creator["firstName"] + " " + creator["lastName"]
                 else:
                     person["name"] = "Name is not provided"
+                # check for person affiliations
+                if "affiliations" in creator:
+                    affiliation = []
+                    for affiliated_org in creator["affiliations"]:
+                        organization = {}
+                        organization["@type"] = "Organization"
+                        organization["name"] = affiliated_org["name"]
+                        affiliation.append(organization)
+                    person["affiliation"] = affiliation
                 creators.append(person)
         schema_jsonld["creator"] = creators
     except KeyError as e:
