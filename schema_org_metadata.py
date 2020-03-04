@@ -25,11 +25,11 @@ def main(argv):
         json_obj = json.load(json_file)
         try:
             schema_org_metadata = generate_schema_org_metadata(json_obj)
+            if schema_org_metadata:
+                with open('{}.jsonld'.format(jsonld_filename.split('.json')[0]), 'w', encoding='utf-8') as output_file:
+                    json.dump(schema_org_metadata, output_file, indent=4)
         except Exception as e:
             logger.error(e)
-
-    with open('{}.jsonld'.format(jsonld_filename.split('.json')[0]), 'w', encoding='utf-8') as output_file:
-        json.dump(schema_org_metadata, output_file, indent=4)
 
 
 def generate_schema_org_metadata(json_obj):
@@ -116,10 +116,11 @@ def generate_schema_org_metadata(json_obj):
                     person["affiliation"] = affiliation
                 creators.append(person)
         schema_jsonld["creator"] = creators
+        return schema_jsonld
+
     except KeyError as e:
         logger.error(e)
-
-    return schema_jsonld
+        return None
 
 
 def help():
