@@ -34,7 +34,7 @@ def main(argv):
 
 def generate_schema_org_metadata(json_obj):
     """
-    The funciton to convert valid DATS json to schema.org json-ld.
+    The function to convert valid DATS json to schema.org json-ld.
     DATS required fields: [ "title", "types", "creators", "licenses", "description", "keywords", "version" ]
 
     :param json_obj: valid DATS json
@@ -54,11 +54,10 @@ def generate_schema_org_metadata(json_obj):
       </body>
     </html>
     """
-
-    schema_jsonld = {}
-    schema_jsonld["@context"] = "https://schema.org/"
-    schema_jsonld["@type"] = "Dataset"
     try:
+        schema_jsonld = {}
+        schema_jsonld["@context"] = "https://schema.org/"
+        schema_jsonld["@type"] = "Dataset"
         # required fields
         schema_jsonld["name"] = json_obj["title"]
         schema_jsonld["description"] = json_obj["description"]
